@@ -1,0 +1,215 @@
+{% extends 'auctions/layout.html' %}
+
+{% load static %}
+
+{% block body %}
+    {% if message %}
+        {% if success %}
+            <div class="message-popup success">
+                <div>
+                    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-check-circle-fill" fill="#70bf2b" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                    </svg>
+                </div>
+                <div id="msg">&nbsp;&nbsp;{{ message }}</div>
+            </div>
+        {% else %}
+            <div class="message-popup error">
+                <div>
+                    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-x-circle-fill" fill="#d12020" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-4.146-3.146a.5.5 0 0 0-.708-.708L8 7.293 4.854 4.146a.5.5 0 1 0-.708.708L7.293 8l-3.147 3.146a.5.5 0 0 0 .708.708L8 8.707l3.146 3.147a.5.5 0 0 0 .708-.708L8.707 8l3.147-3.146z"/>
+                    </svg>
+                </div>
+                <div id="msg">&nbsp;&nbsp;{{ message }}</div>
+            </div>
+        {% endif %}
+    {% endif %}
+    <div class="container">
+        <div class="listing-upper">
+            <div class="listing-left">
+                <center>
+                    <img src="{% static list.image %}">
+                </center>
+            </div>
+            <div class="listing-right">
+                <div class="top">
+                    <h4>{{list.title}}</h4>
+                    <small>Listing ID : {{list.id}}&nbsp;&nbsp;|&nbsp;&nbsp;Created : {{list.create_time}}</small><br>
+
+
+
+                    <div class="watchlist-div">
+                        <div>
+                            <span>
+                                {% if watchlist %}
+                                    <form action="{% url 'remove_watchlist' %}" method="POST">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="id" value="{{list.id}}">
+                                        <input type="hidden" name="origin" value="listing/{{list.id}}">
+                                        <button type="submit" class="hid-btn">
+                                            <span style="font-weight: bolder;">&#10003;</span> Added to watchlist
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <form action="{% url 'add_watchlist' %}" method="POST">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="id" value="{{list.id}}">
+                                        <input type="hidden" name="origin" value="listing/{{list.id}}">
+                                        <button type="submit" class="hid-btn">&#10010; Add to watchlist</button>
+                                    </form>
+                                    
+                                {% endif %}
+                        </div>
+                        <div>
+                        </span>&emsp;|&emsp;
+                            <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-eye-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
+                                <path fill-rule="evenodd" d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+                              </svg>
+                            &ensp;<span class="watch">{{watchers_count}} watcher(s)</span>
+                        </div>
+                    </div>
+
+
+
+                    <div class="regular-div">
+                        <div class="info-div">
+                            <br>
+                            {% if list.status == 'sold' %}
+                                Sold at : 
+                            {% elif list.status == 'active' %}
+                                Current bid : 
+                            {% else %}
+                                Price : 
+                            {% endif %}
+                            &nbsp;<span class="price">US ${{list.current_bid}}</span><br>
+                            {% if outbid == 'yes' %}
+                                <small>You have been outbid.</small>
+                            {% elif outbid == 'no' %}
+                                <small>You are the highest bidder.</small>
+                            {% else %}
+                                <small>&nbsp;</small>
+                            {% endif %}
+                            <form action="{% url 'place_bid' list.id %}" class="bid-form" method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="id" value="{{list.id}}">
+                                {% if list.status == "active" %}
+                                    <input type="number" name="bid" required="required">
+                                    
+                                    <input type="submit" class="btn Button" value="Place Bid">
+                                {% else %}
+                                    {% if list.starting_bid == list.current_bid %}
+                                        <input type="number" name="bid" min="{{list.starting_bid}}" disabled>
+                                    {% elif list.starting_bid < list.current_bid %}
+                                        <input type="number" name="bid" min="{{list.current_bid | add:'1'}}" disabled>
+                                    {% endif %}
+                                    <input type="submit" class="btn Button" value="Place Bid" disabled>
+                                {% endif %}
+                            </form>
+                            <small>{{no_of_bids}} bid(s) so far.</small>
+                            <br><br>
+                            <h6>Details</h6>
+                            <ul>
+                                <li>Condition : {{list.condition}}</li>
+                                <li>Category : {{list.category}}</li>
+                                <li>Seller : {{creater}}</li>
+                                <li>Status : {{list.status}}</li>
+                            </ul><br>
+                        </div>
+                        {% if list.status == "sold" %}
+                            <div class="sold-div">
+                                <img src="{% static 'auctions/Images/sold.png' %}">
+                            </div>
+                        {% elif list.status == "unsold" %}
+                            <div class="sold-div">
+                                <img src="{% static 'auctions/Images/unsold.png' %}">
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="listing-middle">
+            <h5>Description</h5>
+            <p id="listing-description">{{list.description}}</p>
+        </div>
+        <div class="listing-lower">
+            <h4>
+                <form action="{% url 'auction_command' %}" method="POST">
+                    {% csrf_token %}
+                    Recent Bids&nbsp;&nbsp;
+                    <input type="hidden" value="{{list.id}}" name="id">
+                    {% if creater_view %}
+                        {% if list.status == "active" %}
+                            <button class="btn Button">End Auction</button>
+                        {% elif list.status == "sold" %}
+                            <button class="btn Button" disabled>End Auction</button>
+                        {% elif list.status == "unsold" %}
+                            <button class="btn Button">Start Auction</button>
+                        {% endif %}
+                    {% endif %}
+                </form>
+            </h4>
+            <br>
+            <div class="bids-div">
+                <ul class="responsive-table">
+                    <li class="table-header">
+                        <div class="col col-1">Bid Id</div>
+                        <div class="col col-2">Bidder</div>
+                        <div class="col col-3">Bid Amount</div>
+                        <div class="col col-4">Bid Time</div>
+                    </li>
+                    {% for bid in bids %}
+                        <li class="table-row">
+                            <div class="col col-1" data-label="Bid Id">{{bid.id}}</div>
+                            <div class="col col-2" data-label="Bidder">{{bid.bidder}}</div>
+                            <div class="col col-3" data-label="Bid Amount">US ${{bid.bid}}</div>
+                            <div class="col col-4" data-label="Bid Time">{{bid.time}}</div>
+                        </li>
+                    {% empty %}
+                        <center>No bids yet.</center>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% if bids %}
+                <center>
+                    <a href="{% url 'bids' list.id %}">See all</a>
+                </center>
+            {% endif %}
+        </div>
+        <div class="listing-far-lower">
+            <h4>Comments</h4>
+            {% for comment in comments %}
+                <div class="comment-div">
+                    <div>
+                        <svg width="2em" height="2em" viewBox="0 0 16 16" class="bi bi-person-circle" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M13.468 12.37C12.758 11.226 11.195 10 8 10s-4.757 1.225-5.468 2.37A6.987 6.987 0 0 0 8 15a6.987 6.987 0 0 0 5.468-2.63z"/>
+                            <path fill-rule="evenodd" d="M8 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                            <path fill-rule="evenodd" d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="comment-user">
+                            <span>{{comment.commenter}}</span>&nbsp;
+                            <small>Commented on&nbsp;{{comment.time}}</small>
+                        </div>
+                        <div class="comment-data">{{comment.comment}}</div>
+                    </div>
+                </div>
+            {% empty %}
+                    <span id="ncy">No comments yet.</span>
+            {% endfor %}
+            <div class="add-comment-div">
+                <h5>Leave your comment</h5>
+                <div>
+                    <form action="{% url 'add_comment' %}" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="id" value="{{list.id}}">
+                        <textarea name="comment" placeholder="Type your comment here..." required="required"></textarea>
+                        <input type="submit" class="btn Button" value="Post">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
