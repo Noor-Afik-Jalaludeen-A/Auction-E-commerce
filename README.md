@@ -26,8 +26,7 @@ Welcome to the Auction E-commerce project! This web application allows users to 
 - Django 5.x
 - SQLite (or PostgreSQL/MySQL for production)
 - HTML/CSS
-- Bootstrap 5 for styling
-- JavaScript (optional for dynamic features)
+- Bootstrap
 
 ## Installation
 
