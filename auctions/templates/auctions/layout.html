@@ -18,7 +18,7 @@
             </div>
             <div class="right-nav">
                 <form action="{% url 'search' %}" method="GET">
-                    <input type="text" name="query" placeholder="Search Auctions.." value="{{query | default:''}}" required="required">
+                    <input type="text" name="query" placeholder="Search Auctions.." value="{{query | default:''}}" required="required" onchange="this.form.submit()">
                     <input type="submit" value="Search" class="btn search-btn Button">
                     {% csrf_token %}
                 </form>

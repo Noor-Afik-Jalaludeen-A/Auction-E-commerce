@@ -1,0 +1,33 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Bid Result</h2>
+    <div class="alert alert-info" role="alert">
+        <p class="lead">{{ message }}</p>
+        
+        {% if winner %}
+            <p class="lead">Winner: <strong>{{ winner }}</strong> (ID: {{ winner_id }})</p>  <!-- Displaying the winner's name and ID -->
+        {% endif %}
+    </div>
+    
+    {% if listing %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">{{ listing.title }}</h3>
+            </div>
+            <div class="card-body">
+                <p><strong>Description:</strong> {{ listing.description }}</p>
+                <p><strong>Current Bid:</strong> US ${{ listing.current_bid }}</p>
+                <p><strong>Status:</strong> {{ listing.status }}</p>
+                
+                <a href="{% url 'listing' listing.id %}" class="btn btn-primary">View Listing</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Optional: Include Bootstrap JS for better interactivity -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

@@ -73,6 +73,28 @@ def register(request):
     else:
         return render(request, "auctions/register.html")
 
+def bid_result(request, id, status):
+    # Fetch the listing based on ID
+    listing = Listing.objects.get(id=id)
+
+    # Handle different statuses
+    if status == "success":
+        message = "Congratulations! You have successfully placed your bid."
+    elif status == "error_code_bidding_closed":
+        message = "Bidding has closed for this item."
+    elif status == "error_code1":
+        message = f"Error: Bid amount must be greater than or equal to US ${listing.starting_bid}."
+    elif status == "error_code2":
+        message = f"Error: Bid amount must be greater than US ${listing.current_bid}."
+    elif status == "error_code3":
+        message = "There was an error while placing your bid."
+    else:
+        message = "An unknown error occurred."
+
+    return render(request, "auctions/bid_result.html", {
+        'listing': listing,
+        'message': message,
+    })
 
 
 def create(request):
@@ -123,7 +145,8 @@ def search(request):
     results = []
     for each in listings:
         title = each.title.lower()
-        if title.find(query.lower()) >= 0:
+        description=each.description.lower()
+        if title.find(query.lower()) >= 0 or description.find(query.lower())>= 0:
             results.append(each)
     return render(request, "auctions/index.html", {
         "query":query,
@@ -252,36 +275,62 @@ def place_bid(request, id):
             bid_amount = float(request.POST['bid'])
             list_id = request.POST.get('id')
             list_item = Listing.objects.get(id=list_id)
+
+            # Check if bidding is still open
+            if not list_item.is_bidding_open():
+                return HttpResponseRedirect(reverse("bid_result", kwargs={
+                    "id": list_id,
+                    "status": "error_code_bidding_closed"
+                }))
+
             bid_time = datetime.now()
             try:
+                # Check if this is the first bid
                 if UserBid.objects.filter(listing=list_item).count() == 0:
                     if bid_amount < list_item.starting_bid:
                         return HttpResponseRedirect(reverse("bid_result", kwargs={
-                            "id":list_id,
-                            "status":"error_code1"
+                            "id": list_id,
+                            "status": "error_code1"
                         }))
                 else:
+                    # Check if the new bid is higher than the current bid
                     if bid_amount <= list_item.current_bid:
                         return HttpResponseRedirect(reverse("bid_result", kwargs={
-                            "id":list_id,
-                            "status":"error_code2"
+                            "id": list_id,
+                            "status": "error_code2"
                         }))
+                
+                # Update the current bid and save it
                 list_item.current_bid = bid_amount
                 list_item.save()
+
+                # Create a new UserBid instance
                 user_bid = UserBid.objects.create(bidder=request.user, bid=bid_amount, time=bid_time)
                 user_bid.listing.add(list_item)
                 user_bid.save()
+
+                # Check if bidding has ended and determine the winner
+                if not list_item.is_bidding_open():
+                    # Set the winner of the listing
+                    list_item.status = 'sold'
+                    list_item.buyer = request.user  # Assuming you have a buyer field in Listing model
+                    list_item.save()
+
                 return HttpResponseRedirect(reverse("bid_result", kwargs={
-                    "id":list_id,
-                    "status":"success"
+                    "id": list_id,
+                    "status": "success",
+                    "winner": request.user.username if not list_item.is_bidding_open() else None  # Pass winner's name
                 }))
-            except expression as e:
+            except Exception as e:
+                print(f"Error occurred: {e}")  # Log the error for debugging
                 return HttpResponseRedirect(reverse("bid_result", kwargs={
-                    "id":list_id,
-                    "status":"error_code3"
-                    }))
+                    "id": list_id,
+                    "status": "error_code3"
+                }))
         else:
             return HttpResponseRedirect(reverse("login"))
+
+
 
 def bids(request, id):
     list_item = Listing.objects.get(id=id)
