@@ -4,6 +4,11 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.db.models import Max
+from django.shortcuts import render, redirect
+from django.http import HttpResponse
+from django.urls import reverse
+from .models import Listing, Category, User
+from datetime import datetime
 
 from .models import *
 
@@ -68,29 +73,49 @@ def register(request):
     else:
         return render(request, "auctions/register.html")
 
+
+
 def create(request):
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect(reverse("login"))
+
     if request.method == "POST":
         title = request.POST.get('title')
         description = request.POST.get('description')
-        image = request.POST.get('image')
+        image = request.FILES.get('image')  # Use request.FILES to get the uploaded file
         category_code = request.POST.get('category')
         if not category_code:
             category_code = "CNP"
-        category = Category.objects.get(code=category_code)
-        s_bid = request.POST.get('s_bid')
-        condition = request.POST.get('condition')
-        c_time = datetime.now()
+        
+        # Get the category object
         try:
-            listing_ = Listing.objects.create(title=title, description=description, image=image, category=category, starting_bid=s_bid, current_bid=s_bid, condition=condition, create_time=c_time)
+            category = Category.objects.get(code=category_code)
+        except Category.DoesNotExist:
+            return HttpResponse("Category does not exist.")
+
+        s_bid = float(request.POST.get('s_bid'))  # Convert starting bid to float
+        condition = request.POST.get('condition')
+        
+        # Create the listing object
+        try:
+            listing_ = Listing.objects.create(
+                title=title,
+                description=description,
+                image=image,  # Save the uploaded image file
+                category=category,
+                starting_bid=s_bid,
+                current_bid=s_bid,
+                condition=condition,
+                create_time=datetime.now()  # Use current time for creation
+            )
             user = User.objects.get(username=request.user.username)
-            user.listing.add(listing_)
+            user.listing.add(listing_)  # Add listing to user's listings
             return HttpResponseRedirect(reverse("index"))
         except Exception as e:
-            return HttpResponse(f"There was a error while creating the listing. : {e}")
-    if not request.user.is_authenticated:
-        return HttpResponseRedirect(reverse("login"))
-    else:
-        return render(request, "auctions/create.html")
+            return HttpResponse(f"There was an error while creating the listing: {e}")
+
+    return render(request, "auctions/create.html")
+
 
 def search(request):
     query = request.GET['query']

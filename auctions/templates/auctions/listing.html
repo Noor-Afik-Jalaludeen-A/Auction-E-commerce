@@ -28,7 +28,7 @@
         <div class="listing-upper">
             <div class="listing-left">
                 <center>
-                    <img src="{% static list.image %}">
+                    <img src="{{ list.image.url }}" alt="{{ list.title }}" style="max-width: 100%; height: auto;">
                 </center>
             </div>
             <div class="listing-right">

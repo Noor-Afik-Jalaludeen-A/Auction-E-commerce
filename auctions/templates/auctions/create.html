@@ -5,7 +5,7 @@
         <div class="heading">
             <h2>Create Listing</h2>
         </div>
-        <form action="{% url 'create' %}" method="POST">
+        <form action="{% url 'create' %}" method="POST" enctype="multipart/form-data">  <!-- Added enctype -->
             <div class="c_form">
                 {% csrf_token %}
                 <div class="c_row">
@@ -21,7 +21,7 @@
                         <label for="category">Category</label>
                     </div>
                     <div class="row-right">
-                        <select name="category">
+                        <select name="category" required>
                             <option disabled selected value>-- Select an option --</option>
                             <option value="MOT">Motors</option>
                             <option value="ELN">Electronics</option>
@@ -54,15 +54,15 @@
                         <label for="description">Description <span class="star">*</span></label>
                     </div>
                     <div class="row-right">
-                        <textarea name="description" cols="70" rows="5" required="required" placeholder="Add description here.."></textarea>
+                        <textarea name="description" cols="70" rows="5" required placeholder="Add description here.."></textarea>
                     </div>
                 </div>
                 <div class="c_row">
                     <div class="row-left">
-                        <label for="image">Image URL</label>
+                        <label for="image">Image Upload</label>  <!-- Updated label -->
                     </div>
                     <div class="row-right">
-                        <input type="text" name="image" placeholder="e.g., auctions/Images/Listings/image.png">
+                        <input type="file" name="image" accept=".png,.jpg,.jpeg" required>  <!-- Changed to file input -->
                     </div>
                 </div>
                 <div class="c_row">
@@ -70,7 +70,7 @@
                         <label for="s_bid">Starting Bid (USD) <span class="star">*</span></label>
                     </div>
                     <div class="row-right">
-                        <input type="number" step="0.1" min="1.00" name="s_bid" required="required" placeholder="e.g., 50.0">
+                        <input type="number" step="0.1" min="1.00" name="s_bid" required placeholder="e.g., 50.0">
                     </div>
                 </div>
                 <div class="c_row">
@@ -78,7 +78,7 @@
                     <div class="row-right">
                         <input type="submit" value="List item" class="btn create-btn Button">
                         &nbsp;
-                        <a href="{% url 'index' %}" class="btn create-btn" id="cancel">Cancel</a>
+                        <a href="{% url 'index' %}" class="btn create-btn" id="cancel">Cancel</a>  <!-- Cancel button -->
                     </div>
                 </div>
             </div>
